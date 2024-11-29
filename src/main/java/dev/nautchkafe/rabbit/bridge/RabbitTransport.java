@@ -9,6 +9,9 @@ import dev.nautchkafe.rabbit.bridge.RabbitSubscriber;
 import io.vavr.Function1;
 import io.vavr.control.Try;
 import io.vavr.collection.Queue;
+import io.vavr.collection.List;
+import io.vavr.collection.Map;
+import io.vavr.collection.HashMap;
 import io.vavr.concurrent.Future;
 
 import java.io.IOException;
@@ -24,7 +27,7 @@ public final class RabbitTransport<TOPIC> implements RabbitPublisher<TOPIC>, Rab
 
     private final Channel channel;
     private final ObjectMapper objectMapper;
-    private Queue<TOPIC> inMemoryQueue = Queue.empty();
+    private final Map<String, Queue<TOPIC>> topicQueues;
 
     /**
      * Constructor for initializing the RabbitTransport instance with a specific RabbitMQ channel.
@@ -34,6 +37,7 @@ public final class RabbitTransport<TOPIC> implements RabbitPublisher<TOPIC>, Rab
     public RabbitTransport(final Channel channel) {
         this.channel = channel;
         this.objectMapper = new ObjectMapper(); 
+        this.topicQueues = HashMap.empty(); 
     }
 
     /**
@@ -71,6 +75,57 @@ public final class RabbitTransport<TOPIC> implements RabbitPublisher<TOPIC>, Rab
             channel.basicPublish("", topic, null, messageBytes);
         }, Throwable::getCause);
     }
+
+    /**
+     * Publishes a message to multiple topics synchronously.
+     *
+     * This method publishes the message to all the provided topics. For each topic, the publishing operation
+     * is synchronous, meaning the operation will block until the message is published to each topic.
+     *
+     * @param topics A list of topic names to publish the message to.
+     * @param message The message to be published to the topics.
+     * @return An {@link Either} representing the result of the publish operation:
+     *         {@link Either#right(Void)} for success or {@link Either#left(Throwable)} for failure.
+     */
+    public Either<Throwable, Void> publishMultiple(final List<String> topics, final TOPIC message) {
+        return Either.tryCatch(() -> {
+            final byte[] messageBytes = serializeMessage(message);
+
+            topics.forEach(topic -> {
+                channel.queueDeclare(topic, true, false, false, null);
+                channel.basicPublish("", topic, null, messageBytes);
+            });
+        }, Throwable::getCause);
+    }
+
+    /**
+     * Publishes a message to multiple topics asynchronously.
+     *
+     * This method publishes the message to all the provided topics asynchronously. For each topic, the publishing 
+     * operation is performed asynchronously, and the method returns a {@link Future<Void>} that represents the 
+     * completion of all the publishing operations.
+     *
+     * @param topics A list of topic names to publish the message to.
+     * @param message The message to be published to the topics.
+     * @return A {@link Future<Void>} representing the result of the asynchronous publish operation.
+     *         The future is completed once all topics have been published to.
+     */
+    public Future<Void> publishMultipleAsync(final List<String> topics, final TOPIC message) {
+        return Future.future(promise -> {
+            Try.of(() -> {
+                final byte[] messageBytes = serializeMessage(message);
+
+                topics.forEach(topic -> {
+                    Try.run(() -> {
+                        channel.queueDeclare(topic, true, false, false, null);
+                        channel.basicPublish("", topic, null, messageBytes);
+                    }).onFailure(promise::fail);
+                });
+            }).onFailure(promise::fail)
+            .onSuccess(v -> promise.complete(null));
+        });
+    }
+
 
     /**
      * Publishes a message to a RabbitMQ topic asynchronously.
@@ -131,16 +186,44 @@ public final class RabbitTransport<TOPIC> implements RabbitPublisher<TOPIC>, Rab
                             .onFailure(error -> promise.fail(error));
 
                         messageTry.onSuccess(message -> {
-                            inMemoryQueue = inMemoryQueue.append(message);
+                            final Queue<TOPIC> currentQueue = topicQueues.getOrElse(topic, Queue.empty());
+                            topicQueues.put(topic, currentQueue.append(message));
+
                             onMessage.apply(message)
-                                .onFailure(error -> System.err.println("> Message handling error: " + error.getMessage()))
+                                .onFailure(error -> System.err.println("> Błąd obsługi wiadomości: " + error.getMessage()))
                                 .onComplete(result -> promise.complete(null));
                         });
-                    };
+                };
 
-                    Try.run(() -> channel.basicConsume(topic, true, callback, consumerTag -> {}))
-                        .onFailure(promise::fail);
-                });
+                Try.run(() -> channel.basicConsume(topic, true, callback, consumerTag -> {}))
+                .onFailure(promise::fail);
+            });
+        });
+    }
+
+    /**
+     * Subscribes to multiple topics and processes incoming messages concurrently.
+     *
+     * This method subscribes to all the provided topics and initiates message consumption for each one.
+     * Each message is processed using the provided {@code onMessage} function.
+     * The operation is asynchronous, and it completes once all subscriptions are handled.
+     *
+     * @param topics A list of topic names to subscribe to.
+     * @param onMessage A function that handles each received message. The function returns a {@link Future<Void>} 
+     *                  indicating that the message processing is asynchronous.
+     *                  The function accepts a message of type {@code TOPIC} as its argument.
+     * @return A {@link Future<Void>} representing the result of the subscription operation.
+     *         {@link Future#complete(Void)} is called once all subscriptions are completed.
+     */
+    public Future<Void> subscribeToMultipleTopics(
+        final List<String> topics, final Function1<TOPIC, Future<Void>> onMessage) {
+
+        return Future.future(promise -> {
+            topics.forEach(topic -> topicQueues.put(topic, Queue.empty()));
+
+            final List<Future<Void>> subscriptionFutures = topics.map(topic -> subscribeAsync(topic, onMessage));
+
+            Future.sequence(subscriptionFutures).onComplete(result -> promise.complete(null));
         });
     }
 
