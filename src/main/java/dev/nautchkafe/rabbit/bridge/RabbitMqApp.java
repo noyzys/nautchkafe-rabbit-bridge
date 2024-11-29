@@ -10,23 +10,28 @@ public final class RabbitMqApp {
 
         final RabbitClientConnector clientConnector = new RabbitClientConnector();
         final RabbitClientResource<RabbitTransport<RabbitUser>> resource = RabbitTransport.createResource(clientConnector);
+        final RabbitLockMapper lock = new RabbitLockMapper();
 
         resource.use(transport -> {
             transport.peekLeft(error -> System.err.println("Connection failed: " + error.getMessage()))
-                    .peek(result -> result.publish("server", "sync message"))
-                    .peek(result -> result.subscribe("server", message -> {
-                        
-                        System.out.println("Received message: " + message);
-                        return Either.right(null);
-                    
-                    })).peek(result -> result.close());
+                .peek(result -> result.publish("server", "sync message"))
+                .peek(result -> result.subscribe("server", message -> {
+
+                lock.acquire(message, input -> {
+                    System.out.println("Received message: " + input);
+                    return Either.right(null);
+                }).apply(message); 
+
+                return Either.right(null); 
+
+            })).peek(result -> result.close());
 
             transport.peekLeft(error -> System.err.println("Connection failed: " + error.getMessage()))
-                    .peek(result -> result.publishAsync("server_async", "async message"))
-                    .peek(result -> result.subscribeAsync("server_async", message -> {
-                        
-                        System.out.println("Received async message: " + message);
-                        return Future.successful(null);
+                .peek(result -> result.publishAsync("server_async", "async message"))
+                .peek(result -> result.subscribeAsync("server_async", message -> {
+
+                System.out.println("Received async message: " + message);
+                return Future.successful(null);
 
             })).peek(result -> result.closeAsync().onFailure(error -> System.err.println("Failed to close: " + error.getMessage())));
         });

@@ -17,6 +17,7 @@ This project allows easy publishing and subscribing of messages using a publish-
 - RabbitPublisher<TOPIC>: An interface to send messages to a specific RabbitMQ topic.
 - RabbitSubscriber<TOPIC>: An interface to handle incoming messages from a RabbitMQ topic.
 - RabbitTransport<TOPIC>: Implementation that connects to RabbitMQ, publishes messages, and subscribes to topics.
+- RabbitLockMapper: Implementation for lock acquire system in java.concurrent.
 - RabbitClientCredintials: A factory class that handles creating and managing connections to RabbitMQ using the provided configuration.
 
 ### Clone the Repository
@@ -120,11 +121,24 @@ public static void main(String[] args) {
 }
 ```
 
+## With Lockable:
+```java
+RabbitLockMapper lock = new RabbitLockMapper();
+
+lock.acquire(message, input -> {
+    System.out.println("Received message: " + input);
+    return Either.right(null);
+}).apply(message);
+
+return Either.right(null);
+```
+
 ## Expected Output sout (Console)
 ```
 publish, subscribe topic -> "server", "server_async"
 > Received message: sync message
 > Received async message: async message
+RabbitUser{name='Frankie', age=40}
 ```
 
 **Multiple operations**
