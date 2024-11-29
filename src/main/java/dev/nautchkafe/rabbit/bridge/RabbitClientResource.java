@@ -31,7 +31,7 @@ final class RabbitClientResource<TYPE> {
      * @return A new instance of {@link RabbitClientResource}.
      */
     public static <TYPE> RabbitClientResource<TYPE> of(final Function1<Void, Try<T>> initializer, final Function1<TYPE, Try<Void>> disposer) {
-        return new Resource<>(initializer, disposer);
+        return new RabbitClientResource<>(initializer, disposer);
     }
 
     /**
