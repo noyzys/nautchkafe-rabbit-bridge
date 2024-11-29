@@ -10,13 +10,13 @@ repositories {
 }
 
 dependencies {
-    implementation("io.vavr:vavr:0.10.4")
+    implementation("io.vavr:vavr:0.10.5")
 
-    implementation("com.rabbitmq:amqp-client:5.16.0")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.15.0")
+    implementation("com.rabbitmq:amqp-client:5.23.0")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.18.2")
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.8.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.3")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.11.3")
 
 }
 
