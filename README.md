@@ -81,20 +81,20 @@ public static void main(String[] args) {
         // Publish a message to multiple topics synchronously
         transport.peekLeft(error -> System.err.println("Connection failed: " + error.getMessage()))
             .peek(result -> result.publishMultiple(topics, userMessage))
-            .peek(result -> System.out.println("Published message to multiple topics"));
+            .peek(result -> System.out.println("> Published message to multiple topics"));
 
         // Subscribe to multiple topics asynchronously
         transport.peekLeft(error -> System.err.println("Connection failed: " + error.getMessage()))
             .peek(result -> result.subscribeToMultipleTopics(topics, message -> {
             
-            System.out.println("Received message from topic: " + message);
+            System.out.println("> Received message from topic: " + message);
             return Future.successful(null); // Handle asynchronously
-        })).peek(result -> System.out.println("Subscribed to multiple topics"));
+        })).peek(result -> System.out.println("> Subscribed to multiple topics"));
 
         // Publish a message asynchronously to multiple topics
         transport.peekLeft(error -> System.err.println("Connection failed: " + error.getMessage()))
             .peek(result -> result.publishMultipleAsync(topics, userMessage))
-            .peek(result -> System.out.println("Published async message to multiple topics"));
+            .peek(result -> System.out.println("> Published async message to multiple topics"));
 
         // Subscribe to multiple topics asynchronously with async handling
         transport.peekLeft(error -> System.err.println("Connection failed: " + error.getMessage()))
@@ -102,17 +102,17 @@ public static void main(String[] args) {
 
                 System.out.println("Received async message from topic: " + message);
                 return Future.successful(null); // Handle asynchronously
-        })).peek(result -> System.out.println("Subscribed asynchronously to multiple topics"));
+        })).peek(result -> System.out.println("> Subscribed asynchronously to multiple topics"));
 
         // Close the transport after operations are completed
         transport.peekLeft(error -> System.err.println("Connection failed: " + error.getMessage()))
             .peek(result -> result.close())
-            .peek(result -> System.out.println("Transport closed"));
+            .peek(result -> System.out.println("> Transport closed"));
 
         // Close asynchronously
         transport.peekLeft(error -> System.err.println("Connection failed: " + error.getMessage()))
             .peek(result -> result.closeAsync().onFailure(error -> System.err.println("Failed to close: " + error.getMessage())))
-            .peek(result -> System.out.println("Transport closed asynchronously"));
+            .peek(result -> System.out.println("> Transport closed asynchronously"));
     });
 }
 ```
@@ -123,5 +123,26 @@ publish, subscribe topic -> "server", "server_async"
 > Received message: sync message
 > Received async message: async message
 ```
+
+**Multiple operations**
+```
+multi::publish, subscribe topic -> "server-1", "server-2", "server-3"
+> Published message to multiple topics
+> Subscribed to multiple topics
+
+> Received message from topic: RabbitUser{name='Frankie', age=40}
+> Received message from topic: RabbitUser{name='Frankie', age=40}
+> Received message from topic: RabbitUser{name='Frankie', age=40}
+
+> Published async message to multiple topics
+> Subscribed asynchronously to multiple topics
+
+> Received async message from topic: RabbitUser{name='Frankie', age=40}
+> Received async message from topic: RabbitUser{name='Frankie', age=40}
+> Received async message from topic: RabbitUser{name='Frankie', age=40}
+
+> Transport closed
+> Transport closed asynchronously
+````
 
 **If you are interested in exploring functional programming and its applications within this project visit the repository at [vavr-in-action](https://github.com/noyzys/bukkit-vavr-in-action), [fp-practice](https://github.com/noyzys/fp-practice).**
