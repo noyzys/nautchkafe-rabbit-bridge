@@ -28,7 +28,7 @@ public final class RabbitMqApp {
                         System.out.println("Received async message: " + message);
                         return Future.successful(null);
 
-                    })).peek(result -> result.closeAsync().onFailure(error -> System.err.println("Failed to close: " + error.getMessage())));
+            })).peek(result -> result.closeAsync().onFailure(error -> System.err.println("Failed to close: " + error.getMessage())));
         });
     }
 }
