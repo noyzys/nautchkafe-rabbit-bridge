@@ -12,6 +12,19 @@ This project allows easy publishing and subscribing of messages using a publish-
 - Clean, minimalistic design with focus on decoupling the message transport logic from application logic.
 - Supports multiple topics (queues) for publishing and subscribing messages in a highly decoupled manner.
 
+## NOTE without Lockable
+- When a message is delivered to a consumer, it becomes unavailable to other consumers until it is either acknowledged or rejected.
+This mechanism eliminates the risk of racecondition, deadlock, ... between consumers attempting to access the same message.
+- Message Acknowledgments (ACK)
+RabbitMQ employs an acknowledgment system to manage the receipt and processing of messages:
+
+Consumer acknowledgment (ack): The consumer informs RabbitMQ that the message has been successfully processed.
+If the message is not acknowledged within a specified time frame (or if the consumer crashes), RabbitMQ requeues the message, making it available for redelivery.
+- Prefetching and Load Management
+RabbitMQ allows the configuration of a prefetch count parameter, which controls the number of messages delivered to a consumer at a time:
+
+This limits the number of messages processed concurrently by a single consumer.
+It prevents scenarios where a consumer becomes overwhelmed with an excessive number of tasks.
 
 ## Components
 - RabbitPublisher<TOPIC>: An interface to send messages to a specific RabbitMQ topic.
