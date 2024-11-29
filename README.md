@@ -38,10 +38,13 @@ public static void main(String[] args) {
     RabbitClientConnector clientConnector = new RabbitClientConnector();
     RabbitClientResource<RabbitTransport<RabbitUser>> resource = RabbitTransport.createResource(clientConnector);
 
+    // Example RabbitUser message
+    RabbitUser userMessage = new RabbitUser("Frankie", 40);
+
     // Sync
     resource.use(transport -> {
         transport.peekLeft(error -> System.err.println("Connection failed: " + error.getMessage()))
-            .peek(result -> result.publish("server", "sync message"))
+            .peek(result -> result.publish("server", userMessage))
             .peek(result -> result.subscribe("server", message -> {
 
             System.out.println("> Received message: " + message);
@@ -51,7 +54,7 @@ public static void main(String[] args) {
 
         // Async
         transport.peekLeft(error -> System.err.println("Connection failed: " + error.getMessage()))
-            .peek(result -> result.publishAsync("server_async", "async message"))
+            .peek(result -> result.publishAsync("server_async", userMessage))
             .peek(result -> result.subscribeAsync("server_async", message -> {
 
             System.out.println("> Received async message: " + message);
