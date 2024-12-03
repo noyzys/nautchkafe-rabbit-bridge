@@ -16,15 +16,15 @@ import io.vavr.control.Either;
  */
 final class RabbitClientConnector {
 
-    private final RabbitClientCredintials credintials;
+    private final RabbitClientCredentials credentials;
 
     /**
      * Constructs a new instance of RabbitClientConnector with default
      * RabbitMQ connection credentials.
-     * The credentials are initialized using {@link RabbitClientCredintials#createConfig()}.
+     * The credentials are initialized using {@link RabbitClientCredentials#createConfig()}.
      */
     public RabbitClientConnector() {
-        this.credintials = RabbitClientCredintials.createConfig();
+        this.credintials = RabbitClientCredentials.createConfig();
     }
 
     /**
