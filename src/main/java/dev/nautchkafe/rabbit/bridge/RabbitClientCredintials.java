@@ -9,7 +9,7 @@ package dev.nautchkafe.rabbit.bridge;
  * The credentials are typically passed to a {@link RabbitClientConnector} to
  * initiate a connection to the RabbitMQ server.
 */
-record RabbitClientCredintials(
+record RabbitClientCredentials(
     String host,
     int port,
     String username,
@@ -28,7 +28,7 @@ record RabbitClientCredintials(
      * @return A {@link RabbitClientCredintials} instance with default RabbitMQ
      *         connection credentials.
      */
-    public static RabbitClientCredintials createConfig() {
-        return new RabbitClientCredintials("localhost", 5672, "admin", "admin");
+    public static RabbitClientCredentials createConfig() {
+        return new RabbitClientCredentials("localhost", 5672, "admin", "admin");
     }
 }
