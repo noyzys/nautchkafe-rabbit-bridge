@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.vavr:vavr:0.10.5")
+    implementation("io.vavr:vavr:0.10.6")
 
     implementation("com.rabbitmq:amqp-client:5.24.0")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.2")
