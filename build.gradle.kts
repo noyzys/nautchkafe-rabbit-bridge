@@ -12,7 +12,7 @@ repositories {
 dependencies {
     implementation("io.vavr:vavr:0.10.6")
 
-    implementation("com.rabbitmq:amqp-client:5.24.0")
+    implementation("com.rabbitmq:amqp-client:5.25.0")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.2")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.4")
