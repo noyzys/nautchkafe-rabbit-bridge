@@ -37,7 +37,7 @@ final class RabbitLockMapper implements RabbitLockable {
     private final ConcurrentHashMap<String, ReentrantLock> lockMap = new ConcurrentHashMap<>();
 
     @Override
-    public <TYPE, RESULT> Function<T, Try<R>> acquire(final String key, final Function<TYPE, RESULT> action) {
+    public <TYPE, RESULT> Function<TYPE, Try<RESULT>> acquire(final String key, final Function<TYPE, RESULT> action) {
         return input -> {
             final ReentrantLock lock = lockMap.computeIfAbsent(key, k -> new ReentrantLock());
             
